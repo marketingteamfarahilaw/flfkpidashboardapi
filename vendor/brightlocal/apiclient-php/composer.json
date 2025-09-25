@@ -1,0 +1,22 @@
+{
+  "name": "brightlocal/apiclient-php",
+  "description": "BrightLocal API Client",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "BrightLocal",
+      "email": "contact@brightlocal.com"
+    }
+  ],
+  "require": {
+    "guzzlehttp/guzzle": "^7.2",
+    "php": ">=7.2",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "": "src/"
+    }
+  }
+}

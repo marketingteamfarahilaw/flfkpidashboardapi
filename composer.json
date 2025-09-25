@@ -1,0 +1,12 @@
+{
+    "require": {
+        "xendit/xendit-php": "^2.17",
+        "ext-gd": "*",
+        "openai-php/client": "^0.4.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
