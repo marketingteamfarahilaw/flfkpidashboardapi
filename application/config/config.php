@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'https://lmthrp.com/api';
+$config['base_url'] = 'http://31.97.43.196/kpidashboardapi/';
 
 /*
 |--------------------------------------------------------------------------
