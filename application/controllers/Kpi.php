@@ -2047,8 +2047,8 @@ class Kpi extends REST_Controller {
     function successful_signup_get()
     {
         try {
-            $start = $this->input->post('start_date', true) ?: $this->input->get('start_date', true);
-            $end   = $this->input->post('end_date', true)   ?: $this->input->get('end_date', true);
+            $start = date('Y-m-01'); // First day of current month
+            $end   = date('Y-m-d');  // Today's date
             if (!$start || !$end) {
                 http_response_code(400);
                 echo json_encode(['ok' => false, 'error' => 'start_date and end_date are required (YYYY-MM-DD).']);
