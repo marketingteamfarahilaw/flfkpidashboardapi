@@ -87,17 +87,59 @@ class Kpi_Model extends CI_Model
 		return TRUE;
 	}
 
-	function showGraphicsTeam() {
-		$this->db->from("asanakpi a");
+	public function showGraphicsTeam(array $filters = []): array
+    {
+        // Select ONLY the fields your UI renders
+        $this->db->from('asanakpi a');
+        $this->db->select([
+            'a.id',
+            'a.title',
+            'a.due_on',          // DATE/DATETIME
+            'a.completed_at',    // DATETIME NULL
+            'a.performed_by',
+            'a.parent_name',
+            'a.permalink_url'
+        ]);
 
-		$query = $this->db->select('*')
-						->get();
+        // ---- Optional filters (keep results "all" if none provided) ----
+        if (!empty($filters['startDate']) || !empty($filters['endDate'])) {
+            // Inclusive range over completed_at, falling back to due_on
+            $start = !empty($filters['startDate']) ? $filters['startDate'].' 00:00:00' : null;
+            $end   = !empty($filters['endDate'])   ? $filters['endDate'].' 23:59:59'   : null;
 
+            if ($start && $end) {
+                $this->db->where("COALESCE(a.completed_at, a.due_on) >=", $start);
+                $this->db->where("COALESCE(a.completed_at, a.due_on) <=", $end);
+            } elseif ($start) {
+                $this->db->where("COALESCE(a.completed_at, a.due_on) >=", $start);
+            } elseif ($end) {
+                $this->db->where("COALESCE(a.completed_at, a.due_on) <=", $end);
+            }
+        }
 
-		$result = $query->result_array();
+        if (!empty($filters['performedBy'])) {
+            $this->db->where('a.performed_by', $filters['performedBy']);
+        }
+        if (!empty($filters['dueMonth'])) {
+            $this->db->where('MONTH(a.due_on) =', (int)$filters['dueMonth'], false);
+        }
+        if (!empty($filters['dueYear'])) {
+            $this->db->where('YEAR(a.due_on) =', (int)$filters['dueYear'], false);
+        }
+        if (!empty($filters['completedMonth'])) {
+            $this->db->where('MONTH(a.completed_at) =', (int)$filters['completedMonth'], false);
+        }
+        if (!empty($filters['completedYear'])) {
+            $this->db->where('YEAR(a.completed_at) =', (int)$filters['completedYear'], false);
+        }
 
-		return $result;
-	}
+        // Good default order for your UI
+        $this->db->order_by('a.completed_at DESC, a.due_on DESC, a.id DESC');
+
+        // NO LIMIT — returns everything
+        $query = $this->db->get();
+        return $query->result_array();
+    }
 	function showgbp() {
 		$this->db->from("gpb_local_citation a");
 
