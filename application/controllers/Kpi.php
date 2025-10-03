@@ -361,75 +361,111 @@ class Kpi extends REST_Controller {
         ), REST_Controller::HTTP_OK);
     }
     
+    
     function importAsanaTask_get(){
-        $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
-    
-        $users = [
-            'Alex' => '1208729529378377',
-            // 'Jacob' => '1210174404900868',
-            'Nina' => '1206216525404645',
-            'KC' => '1209436214068863',
-            'Myla' => '1206618672290000',
-            'Cyber' => '1207011627772525',
-            'Faye' => '1204274772896118',
-            'Mary' => '1208925354989902',
-            'Ray' => '1209806775551260',
-            // 'Caesar' => '1210199891341332',
-            'Christina' => '1210322171555193',
-            'Rupert' => '1208940612212107'
-        ];
-    
-        foreach ($users as $name => $assigneeID) {
-            $baseUrl = "https://app.asana.com/api/1.0/tasks?assignee={$assigneeID}&workspace=1141478185895232&opt_fields=name,due_on,parent.name,completed_at,completed,notes,permalink_url&limit=100";
-            $allTasks = [];
-            $nextUrl = $baseUrl;
-    
-            do {
-                $ch = curl_init($nextUrl);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Bearer ' . $accessToken,
-                    'Content-Type: application/json'
-                ]);
-                curl_setopt_array($ch, array(
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_ENCODING => '',
-                    CURLOPT_MAXREDIRS => 10,
-                    CURLOPT_TIMEOUT => 0,
-                    CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_CUSTOMREQUEST => 'GET',
-                ));
-    
-                $response = curl_exec($ch);
-                curl_close($ch);
-    
-                $decoded = json_decode($response, true);
-    
-                if (isset($decoded['data']) && is_array($decoded['data'])) {
-                    $allTasks = array_merge($allTasks, $decoded['data']);
-                }
-    
-                $nextUrl = isset($decoded['next_page']['uri']) ? $decoded['next_page']['uri'] : null;
-    
-            } while ($nextUrl);
-    
-            foreach ($allTasks as $task) {
-                $data = array(
-                    'title'         => $task['name'],
-                    'notes'         => $task['notes'],
-                    'parent_id'     => @$task['parent']['gid'] ?? "",
-                    'permalink_url' => $task['permalink_url'],
-                    'completed_at'  => $task['completed_at'],
-                    'due_on'        => $task['due_on'],
-                    'completed'     => $task['completed'],
-                    'parent_name'   => @$task['parent']['name'] ?? "",
-                    'performed_by'  => $name,
-                );
-    
-                $kpi = $this->kpi->import($data);
-            }
-        }
-    }
+      // Prefer env/config over hardcoding
+      $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
+      $workspace   = '1141478185895232';
+  
+      $users = [
+          'Alex'       => '1208729529378377',
+          // 'Jacob'    => '1210174404900868',
+          'Nina'       => '1206216525404645',
+          'KC'         => '1209436214068863',
+          'Myla'       => '1206618672290000',
+          'Cyber'      => '1207011627772525',
+          'Faye'       => '1204274772896118',
+          'Mary'       => '1208925354989902',
+          'Ray'        => '1209806775551260',
+          // 'Caesar'   => '1210199891341332',
+          'Christina'  => '1210322171555193',
+          'Rupert'     => '1208940612212107',
+      ];
+  
+      $summary = [
+          'insert' => 0,
+          'update' => 0,
+          'noop'   => 0,
+          'errors' => []
+      ];
+  
+      foreach ($users as $name => $assigneeID) {
+          // 1) Get all workspaces for this assignee (or all accessible ones if not allowed)
+          $workspaces = $this->getAssigneeWorkspaces($assigneeID, $accessToken, $summary);
+  
+          foreach ($workspaces as $ws) {
+              $workspaceGid  = $ws['gid'];
+              $workspaceName = $ws['name'] ?? $ws['gid'];
+              $summary['workspaces_checked'][] = ['assignee' => $assigneeID, 'workspace' => $workspaceGid, 'name' => $workspaceName];
+  
+              // 2) Pull tasks for this assignee in this workspace
+              $query = http_build_query([
+                  'assignee'   => $assigneeID,
+                  'workspace'  => $workspaceGid,
+                  'opt_fields' => 'gid,name,due_on,parent.name,parent.gid,completed_at,completed,notes,permalink_url',
+                  'limit'      => 100,
+              ]);
+  
+              $nextUrl = 'https://app.asana.com/api/1.0/tasks?' . $query;
+  
+              do {
+                  [$code, $body, $err] = $this->asanaGet($nextUrl, $accessToken);
+  
+                  if ($body === false || $code >= 400) {
+                      if ($code == 429) { usleep(600000); continue; } // short backoff
+                      $summary['errors'][] = [
+                          'assignee'  => $assigneeID,
+                          'workspace' => $workspaceGid,
+                          'message'   => ($err ?: "HTTP $code") . ' BODY: ' . substr((string)$body, 0, 500),
+                          'url'       => $nextUrl,
+                      ];
+                      break;
+                  }
+  
+                  $decoded = json_decode($body, true);
+                  if (!is_array($decoded) || !isset($decoded['data'])) {
+                      $summary['errors'][] = [
+                          'assignee'  => $assigneeID,
+                          'workspace' => $workspaceGid,
+                          'message'   => 'Invalid JSON from Asana. BODY: ' . substr((string)$body, 0, 500),
+                          'url'       => $nextUrl,
+                      ];
+                      break;
+                  }
+  
+                  foreach ($decoded['data'] as $task) {
+                      $record = [
+                          'task_id'       => $task['gid'] ?? null,
+                          'title'         => $task['name'] ?? '',
+                          'notes'         => $task['notes'] ?? '',
+                          'parent_id'     => $task['parent']['gid']  ?? null,
+                          'parent_name'   => $task['parent']['name'] ?? null,
+                          'permalink_url' => $task['permalink_url'] ?? null,
+                          'completed_at'  => $task['completed_at'] ?? null,
+                          'due_on'        => $task['due_on'] ?? null,
+                          'completed'     => !empty($task['completed']) ? 1 : 0,
+                          'performed_by'  => $name,
+                          // (optional) store which workspace we pulled from
+                          'workspace_id'  => $workspaceGid,
+                          'workspace_name'=> $workspaceName,
+                      ];
+  
+                      $res = $this->kpi->import($record);
+                      if (is_array($res) && isset($res['action']) && isset($summary[$res['action']])) {
+                          $summary[$res['action']]++;
+                      }
+                  }
+  
+                  $nextUrl = $decoded['next_page']['uri'] ?? null;
+              } while ($nextUrl);
+          }
+      }
+  
+      // JSON response with a quick summary
+      $this->output
+          ->set_content_type('application/json')
+          ->set_output(json_encode($summary));
+  }
 
     
     function asanaCyberTasks_get(){
