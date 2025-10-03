@@ -468,6 +468,69 @@ class Kpi extends REST_Controller {
   }
 
     
+    private function getAssigneeWorkspaces(string $assigneeID, string $accessToken, array &$summary): array
+    {
+        // Try /users/{assignee}/workspaces first
+        $url = "https://app.asana.com/api/1.0/users/{$assigneeID}/workspaces?limit=100";
+        [$code, $body, $err] = $this->asanaGet($url, $accessToken);
+    
+        if ($body !== false && $code < 400) {
+            $decoded = json_decode($body, true);
+            if (isset($decoded['data']) && is_array($decoded['data']) && count($decoded['data'])) {
+                return array_map(function ($w) {
+                    return ['gid' => $w['gid'], 'name' => $w['name'] ?? $w['gid']];
+                }, $decoded['data']);
+            }
+        } else {
+            // Log why we fell back
+            $summary['errors'][] = [
+                'assignee' => $assigneeID,
+                'message'  => 'Could not list assignee workspaces; falling back to my workspaces. ' . ($err ?: "HTTP $code") . ' BODY: ' . substr((string)$body, 0, 300),
+                'url'      => $url,
+            ];
+        }
+    
+        // Fallback: list the token user’s workspaces
+        $url = "https://app.asana.com/api/1.0/workspaces?limit=100";
+        [$code, $body, $err] = $this->asanaGet($url, $accessToken);
+    
+        if ($body !== false && $code < 400) {
+            $decoded = json_decode($body, true);
+            if (isset($decoded['data']) && is_array($decoded['data']) && count($decoded['data'])) {
+                return array_map(function ($w) {
+                    return ['gid' => $w['gid'], 'name' => $w['name'] ?? $w['gid']];
+                }, $decoded['data']);
+            }
+        }
+    
+        // If all else fails, return an empty list so caller handles gracefully
+        return [];
+    }
+    
+    private function asanaGet(string $url, string $accessToken): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . $accessToken,
+                'Accept: application/json',
+                'User-Agent: JFJ-KPI-Importer/1.0',
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 5,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'GET',
+        ]);
+        $body    = curl_exec($ch);
+        $code    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err     = curl_error($ch);
+        curl_close($ch);
+        return [$code, $body, $err];
+    }
+    
     function asanaCyberTasks_get(){
         $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
         $baseUrl = 'https://app.asana.com/api/1.0/tasks?assignee=1207011627772525&workspace=1141478185895232&opt_fields=name,due_on,parent.name,completed_at,completed,notes,permalink_url&limit=100';
