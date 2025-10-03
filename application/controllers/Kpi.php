@@ -1215,7 +1215,6 @@ class Kpi extends REST_Controller {
             'case_id_number'            => $this->post('case_id_number'),
             'callback_number'           => $this->post('callback_number'),
             'sign_up_date'              => $this->post('sign_up_date'),
-            'created_date'              => $this->post('created_date'),
             '90_day_drop_date'          => $this->post('90_day_drop_date'),
             'signed_cases_referral_status'  => $this->post('signed_cases_referral_status'),
             'intake_completed_2'         => $this->post('intake_completed_2'),
