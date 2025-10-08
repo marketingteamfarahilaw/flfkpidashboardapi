@@ -2530,13 +2530,13 @@ class Kpi extends REST_Controller {
 
         // Build data
         $data = [
-            'brand'             => trim($brand),
-            'publication_month' => $publication_month ? trim($publication_month) : null,
+            'brand'             => $brand,
+            'publication_month' => $publication_month ? $publication_month : null,
             'task'              => $task,
             'type'              => $type,
             'language'          => $language,
             'task_date'         => $task_date,
-            'link_proof'        => $link_proof ? trim($link_proof) : null,
+            'link_proof'        => $link_proof ? $link_proof : null,
         ];
 
         // pr($data);die();  
