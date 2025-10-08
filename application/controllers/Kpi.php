@@ -2533,7 +2533,7 @@ class Kpi extends REST_Controller {
             // 'link_proof'        => $link_proof ? trim($link_proof) : null,
         ];
 
-        die($data);  
+        pr($data);die();  
         // UPSERT by unique key (brand, task_date, task, type)
         $existing = $this->content->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
 
