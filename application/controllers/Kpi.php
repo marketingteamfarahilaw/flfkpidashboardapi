@@ -2486,7 +2486,6 @@ class Kpi extends REST_Controller {
     // content
     function add_content_post()
     {
-      die('yeah');
         // Grab payload (works for form-data or JSON)
         $raw = $this->input->raw_input_stream;
         if (!empty($raw) && empty($_POST)) {
@@ -2545,6 +2544,7 @@ class Kpi extends REST_Controller {
                 'id'     => (int)$existing->id
             ]);
         } else {
+      die('yeah');  
             $new_id = $this->content->save_content($data);
             echo json_encode([
                 'status' => 'ok',
