@@ -25,12 +25,16 @@ class Kpi_Model extends CI_Model
 		return $data;
 	}
 	
-	function save_campaign_report($data) {
+	public function get_campaign_by_name($name)
+    {
+        return $this->db->get_where('campaign_reports', ['name' => $name])->row_array();
+    }
 
-		$this->db->insert('campaign_reports', $data);
-
-		return $data;
-	}
+    public function update_campaign_report($id, $data)
+    {
+        $this->db->where('id', $id);
+        return $this->db->update('campaign_reports', $data);
+    }
     
     function import($data) {
 
@@ -840,5 +844,26 @@ class Kpi_Model extends CI_Model
 		return $result;
     }
 
+    // content
+    function save_content(array $data)
+    {
+        $this->db->insert('content_activity', $data);
+        return $this->db->insert_id();
+    }
 
+    function update_content_by_id($id, array $data)
+    {
+        $this->db->where('id', (int)$id)->update('content_activity', $data);
+        return $this->db->affected_rows();
+    }
+
+    function find_content_existing($brand, $task_date, $task, $type)
+    {
+        return $this->db->where('brand', $brand)
+                        ->where('task_date', $task_date)
+                        ->where('task', $task)
+                        ->where('type', $type)
+                        ->get('content_activity')
+                        ->row();
+    }
 }

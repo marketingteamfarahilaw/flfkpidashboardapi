@@ -256,7 +256,7 @@ class Kpi extends REST_Controller {
 			'article_type'      => $this->input->post('article_type'),
 			'note'              => $this->input->post('note'),
 			'platform'          => $this->input->post('platform'),
-		);
+		);  
 
 		$kpi = $this->kpi->update( $data );
 
@@ -969,18 +969,18 @@ class Kpi extends REST_Controller {
     
     function add_seo_perf_post(){
         $data = array(
-			'date'                          => $this->input->post('date'),
-			'brands'                        => $this->input->post('brands'),
-			'sessions'                      => $this->input->post('sessions'),
-			'total_users'                   => $this->input->post('total_users'),
-			'avg_engage_time_session'       => $this->input->post('avg_engage_time_session'),
-			'phone_leads'                   => $this->input->post('phone_leads'),
-			'form_leads'                    => $this->input->post('form_leads'),
-			'flf_leads'                     => $this->input->post('flf_leads'),
-			'flf_signups'                   => $this->input->post('flf_signups'),
-			'rank_performance'              => $this->input->post('rank_performance'),
-			'notes'                         => $this->input->post('notes'),
-		);
+          'date'                          => $this->input->post('date'),
+          'brands'                        => $this->input->post('brands'),
+          'sessions'                      => $this->input->post('sessions'),
+          'total_users'                   => $this->input->post('total_users'),
+          'avg_engage_time_session'       => $this->input->post('avg_engage_time_session'),
+          'phone_leads'                   => $this->input->post('phone_leads'),
+          'form_leads'                    => $this->input->post('form_leads'),
+          'flf_leads'                     => $this->input->post('flf_leads'),
+          'flf_signups'                   => $this->input->post('flf_signups'),
+          'rank_performance'              => $this->input->post('rank_performance'),
+          'notes'                         => $this->input->post('notes'),
+        );
 
 		$kpi = $this->kpi->saveseoperf( $data );
 
@@ -2483,6 +2483,74 @@ class Kpi extends REST_Controller {
             echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }
     }
+    // content
+    function add_content_post()
+    {
+        // Grab payload (works for form-data or JSON)
+        $raw = $this->input->raw_input_stream;
+        if (!empty($raw) && empty($_POST)) {
+            $json = json_decode($raw, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+                foreach ($json as $k => $v) {
+                    $_POST[$k] = $v; // normalize so we can use $this->input->post()
+                }
+            }
+        }
 
+        // Fields
+        $brand             = $this->input->post('brand');               // e.g., "Justin for Justice"
+        $publication_month = $this->input->post('publication_month');   // e.g., "2025-10" or "October 2025"
+        $task              = $this->input->post('task');                // e.g., "Blog – Pedestrian Accident"
+        $type              = $this->input->post('type');                // e.g., "Blog", "Social", "Video"
+        $language          = $this->input->post('language');            // e.g., "English"
+        $task_date         = $this->input->post('task_date');           // e.g., "2025-10-07"
+        $link_proof        = $this->input->post('link_proof');          // e.g., URL
+        // Allow alternate key names common from sheets
+        if (!$link_proof) $link_proof = $this->input->post('link') ?: $this->input->post('Link (Proof of Work)');
+
+        // Basic validation
+        if (!$brand || !$task || !$type || !$language || !$task_date) {
+            http_response_code(422);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Missing required fields: brand, task, type, language, task_date.'
+            ]);
+            return;
+        }
+
+        // Normalize date to YYYY-MM-DD if possible
+        $ts = strtotime($task_date);
+        if ($ts !== false) $task_date = date('Y-m-d', $ts);
+
+        // Build data
+        $data = [
+            'brand'             => trim($brand),
+            'publication_month' => $publication_month ? trim($publication_month) : null,
+            'task'              => trim($task),
+            'type'              => trim($type),
+            'language'          => trim($language),
+            'task_date'         => $task_date,
+            'link_proof'        => $link_proof ? trim($link_proof) : null,
+        ];
+
+        // UPSERT by unique key (brand, task_date, task, type)
+        $existing = $this->content->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
+
+        if ($existing) {
+            $this->content->update_content_by_id($existing->id, $data);
+            echo json_encode([
+                'status' => 'ok',
+                'action' => 'updated',
+                'id'     => (int)$existing->id
+            ]);
+        } else {
+            $new_id = $this->content->save_content($data);
+            echo json_encode([
+                'status' => 'ok',
+                'action' => 'inserted',
+                'id'     => (int)$new_id
+            ]);
+        }
+    }
 
 }
