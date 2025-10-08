@@ -2526,9 +2526,9 @@ class Kpi extends REST_Controller {
         $data = [
             'brand'             => trim($brand),
             'publication_month' => $publication_month ? trim($publication_month) : null,
-            'task'              => trim($task),
-            'type'              => trim($type),
-            'language'          => trim($language),
+            'task'              => $task,
+            'type'              => $type,
+            'language'          => $language,
             // 'task_date'         => $task_date,
             'link_proof'        => $link_proof ? trim($link_proof) : null,
         ];
