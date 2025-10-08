@@ -859,6 +859,7 @@ class Kpi_Model extends CI_Model
 
     function find_content_existing($brand, $task_date, $task, $type)
     {
+        die('yeah');
         return $this->db->where('brand', $brand)
                         ->where('task_date', $task_date)
                         ->where('task', $task)
