@@ -2538,7 +2538,6 @@ class Kpi extends REST_Controller {
         $existing = $this->kpi->find_content_existing($data['brand'], $data['task'], $data['type']);
 
         if ($existing) {
-            die('yep');
             $this->kpi->update_content_by_id($existing->id, $data);
             echo json_encode([
                 'status' => 'ok',
@@ -2546,7 +2545,6 @@ class Kpi extends REST_Controller {
                 'id'     => (int)$existing->id
             ]);
         } else {
-            die('yeah');
             $new_id = $this->kpi->save_content($data);
             echo json_encode([
                 'status' => 'ok',

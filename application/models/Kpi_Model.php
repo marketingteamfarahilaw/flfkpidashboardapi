@@ -847,6 +847,7 @@ class Kpi_Model extends CI_Model
     // content
     function save_content(array $data)
     {
+        pr($data);die();
         $this->db->insert('content_activity', $data);
         return $this->db->insert_id();
     }
