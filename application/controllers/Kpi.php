@@ -2508,6 +2508,7 @@ class Kpi extends REST_Controller {
         // Allow alternate key names common from sheets
         if (!$link_proof) $link_proof = $this->input->post('link') ?: $this->input->post('Link (Proof of Work)');
 
+      die($brand);  
         // Basic validation
         if (!$brand || !$task || !$type || !$language || !$task_date) {
             http_response_code(422);
@@ -2544,7 +2545,6 @@ class Kpi extends REST_Controller {
                 'id'     => (int)$existing->id
             ]);
         } else {
-      die('yeah');  
             $new_id = $this->content->save_content($data);
             echo json_encode([
                 'status' => 'ok',
