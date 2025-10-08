@@ -2506,7 +2506,7 @@ class Kpi extends REST_Controller {
         $task_date         = $this->input->post('task_date');           // e.g., "2025-10-07"
         $link_proof        = $this->input->post('link_proof');          // e.g., URL
         // Allow alternate key names common from sheets
-        // if (!$link_proof) $link_proof = $this->input->post('link') ?: $this->input->post('Link (Proof of Work)');
+        if (!$link_proof) $link_proof = $this->input->post('link') ?: $this->input->post('Link (Proof of Work)');
 
         // Basic validation
         // if (!$brand || !$task || !$type || !$language || !$task_date) {
@@ -2519,18 +2519,18 @@ class Kpi extends REST_Controller {
         // }
 
         // Normalize date to YYYY-MM-DD if possible
-        // $ts = strtotime($task_date);
-        // if ($ts !== false) $task_date = date('Y-m-d', $ts);
+        $ts = strtotime($task_date);
+        if ($ts !== false) $task_date = date('Y-m-d', $ts);
 
         // Build data
         $data = [
             'brand'             => trim($brand),
-            // 'publication_month' => $publication_month ? trim($publication_month) : null,
-            // 'task'              => trim($task),
-            // 'type'              => trim($type),
-            // 'language'          => trim($language),
-            // 'task_date'         => $task_date,
-            // 'link_proof'        => $link_proof ? trim($link_proof) : null,
+            'publication_month' => $publication_month ? trim($publication_month) : null,
+            'task'              => trim($task),
+            'type'              => trim($type),
+            'language'          => trim($language),
+            'task_date'         => $task_date,
+            'link_proof'        => $link_proof ? trim($link_proof) : null,
         ];
 
         pr($data);die();  
