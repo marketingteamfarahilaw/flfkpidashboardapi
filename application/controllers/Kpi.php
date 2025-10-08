@@ -2519,8 +2519,8 @@ class Kpi extends REST_Controller {
         // }
 
         // Normalize date to YYYY-MM-DD if possible
-        $ts = strtotime($task_date);
-        if ($ts !== false) $task_date = date('Y-m-d', $ts);
+        // $ts = strtotime($task_date);
+        // if ($ts !== false) $task_date = date('Y-m-d', $ts);
 
         // Build data
         $data = [
@@ -2529,7 +2529,7 @@ class Kpi extends REST_Controller {
             'task'              => trim($task),
             'type'              => trim($type),
             'language'          => trim($language),
-            'task_date'         => $task_date,
+            // 'task_date'         => $task_date,
             'link_proof'        => $link_proof ? trim($link_proof) : null,
         ];
 
