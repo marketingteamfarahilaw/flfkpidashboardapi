@@ -2535,7 +2535,7 @@ class Kpi extends REST_Controller {
 
         // pr($data);die();  
         // UPSERT by unique key (brand, task_date, task, type)
-        $existing = $this->kpi->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
+        $existing = $this->kpi->find_content_existing($data['brand'], $data['task'], $data['type']);
 
         if ($existing) {
             $this->kpi->update_content_by_id($existing->id, $data);
