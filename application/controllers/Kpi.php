@@ -2509,18 +2509,24 @@ class Kpi extends REST_Controller {
         if (!$link_proof) $link_proof = $this->input->post('link') ?: $this->input->post('Link (Proof of Work)');
 
         // Basic validation
-        // if (!$brand || !$task || !$type || !$language || !$task_date) {
-        //     http_response_code(422);
-        //     echo json_encode([
-        //         'status'  => 'error',
-        //         'message' => 'Missing required fields: brand, task, type, language, task_date.'
-        //     ]);
-        //     return;
-        // }
+        if (!$brand || !$task || !$type || !$language || !$task_date) {
+            http_response_code(422);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Missing required fields: brand, task, type, language, task_date.'
+            ]);
+            return;
+        }
 
         // Normalize date to YYYY-MM-DD if possible
-        // $ts = strtotime($task_date);
-        // if ($ts !== false) $task_date = date('Y-m-d', $ts);
+        if (!empty($task_date)) {
+            try {
+                $dt = new DateTime($task_date);
+                $task_date = $dt->format('Y-m-d');
+            } catch (Exception $e) {
+                log_message('error', 'Invalid task_date: ' . $task_date);
+            }
+        }
 
         // Build data
         $data = [
@@ -2529,13 +2535,13 @@ class Kpi extends REST_Controller {
             'task'              => $task,
             'type'              => $type,
             'language'          => $language,
-            // 'task_date'         => $task_date,
+            'task_date'         => $task_date,
             'link_proof'        => $link_proof ? trim($link_proof) : null,
         ];
 
         // pr($data);die();  
         // UPSERT by unique key (brand, task_date, task, type)
-        $existing = $this->kpi->find_content_existing($data['brand'], $data['task'], $data['type']);
+        $existing = $this->kpi->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
 
         if ($existing) {
             $this->kpi->update_content_by_id($existing->id, $data);

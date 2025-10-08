@@ -857,10 +857,10 @@ class Kpi_Model extends CI_Model
         return $this->db->affected_rows();
     }
 
-    function find_content_existing($brand, $task, $type)
+    function find_content_existing($brand, $task_date, $task, $type)
     {
         return $this->db->where('brand', $brand)
-                        // ->where('task_date', $task_date)
+                        ->where('task_date', $task_date)
                         ->where('task', $task)
                         ->where('type', $type)
                         ->get('content_activity')
