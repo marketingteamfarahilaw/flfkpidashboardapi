@@ -2486,7 +2486,6 @@ class Kpi extends REST_Controller {
     // content
     function add_content_post()
     {
-      $this->load->model('Kpi_model','content');
         // Grab payload (works for form-data or JSON)
         $raw = $this->input->raw_input_stream;
         if (!empty($raw) && empty($_POST)) {
@@ -2536,17 +2535,17 @@ class Kpi extends REST_Controller {
 
         // pr($data);die();  
         // UPSERT by unique key (brand, task_date, task, type)
-        $existing = $this->content->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
+        $existing = $this->kpi->find_content_existing($data['brand'], $data['task_date'], $data['task'], $data['type']);
 
         if ($existing) {
-            $this->content->update_content_by_id($existing->id, $data);
+            $this->kpi->update_content_by_id($existing->id, $data);
             echo json_encode([
                 'status' => 'ok',
                 'action' => 'updated',
                 'id'     => (int)$existing->id
             ]);
         } else {
-            $new_id = $this->content->save_content($data);
+            $new_id = $this->kpi->save_content($data);
             echo json_encode([
                 'status' => 'ok',
                 'action' => 'inserted',
