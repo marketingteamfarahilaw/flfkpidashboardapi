@@ -1795,7 +1795,7 @@ class Kpi extends REST_Controller {
             }
     
             $targetLead   = (int)($this->input->post('target_lead')   ?: $this->input->get('target_lead')   ?: 250);
-            $targetSignup = (int)($this->input->post('target_signup') ?: $this->input->get('target_signup') ?: 45);
+            $targetSignup = (int)($this->input->post('target_signup') ?: $this->input->get('target_signup') ?: 55);
             // $toEmail      = trim($this->input->post('to') ?: $this->input->get('to') ?: 'ray@farahilaw.com');
             $toEmail      = trim($this->input->post('to') ?: $this->input->get('to') ?: 'ray@farahilaw.com, ninasioson@farahilaw.com, rupert@farahilaw.com, cyber@farahilaw.com, maryc@farahilaw.com, faye@farahilaw.com');
     
@@ -2154,7 +2154,7 @@ class Kpi extends REST_Controller {
             }
     
             $targetLead   = (int)($this->input->post('target_lead')   ?: $this->input->get('target_lead')   ?: 250);
-            $targetSignup = (int)($this->input->post('target_signup') ?: $this->input->get('target_signup') ?: 45);
+            $targetSignup = (int)($this->input->post('target_signup') ?: $this->input->get('target_signup') ?: 55);
             // $toEmail      = trim($this->input->post('to') ?: $this->input->get('to') ?: 'ray@farahilaw.com');
             $toEmail      = trim($this->input->post('to') ?: $this->input->get('to') ?: 'ray@farahilaw.com, ninasioson@farahilaw.com, rupert@farahilaw.com, cyber@farahilaw.com, maryc@farahilaw.com, faye@farahilaw.com');
     
