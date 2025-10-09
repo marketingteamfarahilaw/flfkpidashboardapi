@@ -19,6 +19,17 @@ class Kpi extends REST_Controller {
         show_404();
     }
 
+    function content_get() {
+        $content = $this->kpi->content_show();
+
+        if($content){
+            $this->response([
+                'status' => TRUE,
+                'response' => $content,
+            ], REST_Controller::HTTP_OK);
+        }
+    }
+
     function show_get(){
         $kpi = $this->kpi->show();
 

@@ -17,6 +17,18 @@ class Kpi_Model extends CI_Model
 
 		return $result;
 	}
+
+    function content_show() {
+        $this->db->from("content_activity a");
+
+		$query = $this->db->select('*')
+						->get();
+
+
+		$result = $query->result_array();
+
+		return $result;
+    }
     
     function saveSeo($data) {
 
