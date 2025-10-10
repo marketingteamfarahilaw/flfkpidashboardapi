@@ -2464,7 +2464,7 @@ class Kpi extends REST_Controller {
                 ]);
             }
     
-            $this->email->from('no-reply@farahilaw.com', 'SINGUP ANNOUNCEMENT');
+            $this->email->from('no-reply@farahilaw.com', 'SIGNUP ANNOUNCEMENT');
             $this->email->to($toEmail);
             $this->email->subject($subject);
             $this->email->message($message);
