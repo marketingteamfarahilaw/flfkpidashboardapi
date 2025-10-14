@@ -1799,10 +1799,11 @@ class Kpi extends REST_Controller {
         try {
             $start = $this->input->post('start_date', true) ?: $this->input->get('start_date', true);
             $end   = $this->input->post('end_date', true)   ?: $this->input->get('end_date', true);
-            if (!$start || !$end) {
-                http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'start_date and end_date are required (YYYY-MM-DD).']);
-                return;
+
+            // If no dates are provided, default to Month-To-Date (MTD)
+            if (empty($start) || empty($end)) {
+                $start = date('Y-m-01'); // First day of the current month
+                $end   = date('Y-m-d');  // Today's date
             }
     
             $targetLead   = (int)($this->input->post('target_lead')   ?: $this->input->get('target_lead')   ?: 250);
