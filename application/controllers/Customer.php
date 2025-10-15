@@ -115,7 +115,6 @@
 	     * */
 	    function users_get ( )
 	    {
-			die('yeah');
 			// $user = $this->_getUser( ($this->input->get( 'token' )) );
 			$this->load->model( 'Customers_model', 'customer' );
 			$data = $this->customer->user_list();
