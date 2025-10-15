@@ -13,8 +13,8 @@
 			parent::__construct();
 			date_default_timezone_set( 'Asia/Manila' );
 
-			$user = $this->_getUser( ($this->input->get( 'token' )) ? $this->input->get( 'token' ) : $this->input->post( 'token' ) );
-			$this->logged_user = $user;
+			// $user = $this->_getUser( ($this->input->get( 'token' )) ? $this->input->get( 'token' ) : $this->input->post( 'token' ) );
+			// $this->logged_user = $user;
 
 		}
 
