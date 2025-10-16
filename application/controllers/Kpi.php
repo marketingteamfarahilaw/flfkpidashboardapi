@@ -6,7 +6,7 @@ class Kpi extends REST_Controller {
     function __construct() {
         parent::__construct();
         $this->load->helper(array('html', 'url', 'date', 'form'));
-        date_default_timezone_set('Asia/Manila');
+        date_default_timezone_set('America/Los_Angeles');
         
         $this->load->model( 'Kpi_Model', 'kpi' );
         
