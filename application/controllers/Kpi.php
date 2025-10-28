@@ -1677,7 +1677,7 @@ class Kpi extends REST_Controller {
     
         // $totalSigned   = $mtdSignCount + $referredCount;
         $totalSigned   = $mtdSignCount + $referredCount;
-        $mtdAcqRate    = $mtdLeadCount > 0 ? round(($totalSigned / $mtdLeadCount) * 100, 2) : 0.00;
+        $mtdAcqRate    = $mtdLeadCount > 0 ? round(($mtdSignCount / $mtdLeadCount) * 100, 2) : 0.00;
     
         $pctToGoalLeads   = $targetLead   > 0 ? round(($mtdLeadCount / $targetLead) * 100, 2) : 0.00;
         $pctToGoalSignups = $targetSignup > 0 ? round(($totalSigned  / $targetSignup) * 100, 2) : 0.00;
