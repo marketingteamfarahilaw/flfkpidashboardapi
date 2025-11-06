@@ -374,6 +374,7 @@ class Kpi extends REST_Controller {
     
     
     function importAsanaTask_get(){
+        pr('yeah');die();
       // Prefer env/config over hardcoding
       $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
       $workspace   = '1141478185895232';
