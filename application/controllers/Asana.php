@@ -11,7 +11,7 @@ class Asana extends REST_Controller {
         $this->load->model('Asana_Model', 'asana');
         $this->load->helper(['security','date']);
     }
-    function asanaSync() {
+    function asanaSync_post() {
         // Only allow POST
         if (strtoupper($_SERVER['REQUEST_METHOD']) !== 'POST') {
             http_response_code(405);
