@@ -1,8 +1,8 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
-require APPPATH . '/libraries/REST_Controller.php';
+    <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+    require APPPATH . '/libraries/REST_Controller.php';
 
-// require_once APPPATH . 'libraries/OpenAIWrapper.php';
-class Kpi extends REST_Controller {
+    // require_once APPPATH . 'libraries/OpenAIWrapper.php';
+    class Kpi extends REST_Controller {
     function __construct() {
         parent::__construct();
         $this->load->helper(array('html', 'url', 'date', 'form'));
@@ -374,7 +374,6 @@ class Kpi extends REST_Controller {
     
     
     function importAsanaTask_get(){
-        pr('yeah');die();
       // Prefer env/config over hardcoding
       $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
       $workspace   = '1141478185895232';
@@ -1680,8 +1679,8 @@ class Kpi extends REST_Controller {
         $totalSigned   = $mtdSignCount + $referredCount;
         $mtdAcqRate    = $mtdLeadCount > 0 ? round(($totalSigned / $mtdLeadCount) * 100, 2) : 0.00;
     
-        $pctToGoalLeads   = $targetLead   > 0 ? round(($mtdLeadCount / $targetLead) * 100, 2) : 0.00;
-        $pctToGoalSignups = $targetSignup > 0 ? round(($mtdSignCount / $targetSignup) * 100, 2) : 0.00;
+        $pctToGoalLeads   = $targetLead   > 0 ? round(($totalSigned / $targetLead) * 100, 2) : 0.00;
+        $pctToGoalSignups = $targetSignup > 0 ? round(($mtdLeadCount  / $targetSignup) * 100, 2) : 0.00;
     
         $targetAR = ($targetLead > 0) ? ($targetSignup / $targetLead) : 0;
         $actualAR = ($mtdLeadCount > 0) ? ($totalSigned / $mtdLeadCount) : 0;
