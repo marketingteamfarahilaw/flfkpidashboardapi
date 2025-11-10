@@ -1215,6 +1215,8 @@
         $list = $this->kpi->fetchleaddocket();
 
         if ( $list ) {
+            header_remove('Content-Encoding');
+            ob_end_flush();
             $this->response( array(
                 'status'   => TRUE,
                 'response' => $list,
