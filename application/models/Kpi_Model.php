@@ -110,6 +110,10 @@ class Kpi_Model extends CI_Model
         $this->db->select([
             'a.id',
             'a.title',
+            'a.output_count',
+            'a.brand',
+            'a.task_type',
+            'a.time_minutes',
             'a.due_on',          // DATE/DATETIME
             'a.completed_at',    // DATETIME NULL
             'a.performed_by',
