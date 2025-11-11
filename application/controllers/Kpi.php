@@ -373,111 +373,310 @@
     }
     
     
-    function importAsanaTask_get(){
-      // Prefer env/config over hardcoding
-      $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
-      $workspace   = '1141478185895232';
+    // function importAsanaTask_get(){
+    //   // Prefer env/config over hardcoding
+    //   $accessToken = '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
+    //   $workspace   = '1141478185895232';
   
-      $users = [
-          'Alex'       => '1208729529378377',
-          // 'Jacob'    => '1210174404900868',
-          'Nina'       => '1206216525404645',
-          'KC'         => '1209436214068863',
-          'Myla'       => '1206618672290000',
-          'Cyber'      => '1207011627772525',
-          'Faye'       => '1204274772896118',
-          'Mary'       => '1208925354989902',
-          'Ray'        => '1209806775551260',
-          // 'Caesar'   => '1210199891341332',
-          'Christina'  => '1210322171555193',
-          'Rupert'     => '1208940612212107',
-      ];
+    //   $users = [
+    //       'Alex'       => '1208729529378377',
+    //       // 'Jacob'    => '1210174404900868',
+    //       'Nina'       => '1206216525404645',
+    //       'KC'         => '1209436214068863',
+    //       'Myla'       => '1206618672290000',
+    //       'Cyber'      => '1207011627772525',
+    //       'Faye'       => '1204274772896118',
+    //       'Mary'       => '1208925354989902',
+    //       'Ray'        => '1209806775551260',
+    //       // 'Caesar'   => '1210199891341332',
+    //       'Christina'  => '1210322171555193',
+    //       'Rupert'     => '1208940612212107',
+    //   ];
   
-      $summary = [
-          'insert' => 0,
-          'update' => 0,
-          'noop'   => 0,
-          'errors' => []
-      ];
+    //   $summary = [
+    //       'insert' => 0,
+    //       'update' => 0,
+    //       'noop'   => 0,
+    //       'errors' => []
+    //   ];
   
-      foreach ($users as $name => $assigneeID) {
-          // 1) Get all workspaces for this assignee (or all accessible ones if not allowed)
-          $workspaces = $this->getAssigneeWorkspaces($assigneeID, $accessToken, $summary);
+    //   foreach ($users as $name => $assigneeID) {
+    //       // 1) Get all workspaces for this assignee (or all accessible ones if not allowed)
+    //       $workspaces = $this->getAssigneeWorkspaces($assigneeID, $accessToken, $summary);
   
-          foreach ($workspaces as $ws) {
-              $workspaceGid  = $ws['gid'];
-              $workspaceName = $ws['name'] ?? $ws['gid'];
-              $summary['workspaces_checked'][] = ['assignee' => $assigneeID, 'workspace' => $workspaceGid, 'name' => $workspaceName];
+    //       foreach ($workspaces as $ws) {
+    //           $workspaceGid  = $ws['gid'];
+    //           $workspaceName = $ws['name'] ?? $ws['gid'];
+    //           $summary['workspaces_checked'][] = ['assignee' => $assigneeID, 'workspace' => $workspaceGid, 'name' => $workspaceName];
   
-              // 2) Pull tasks for this assignee in this workspace
-              $query = http_build_query([
-                  'assignee'   => $assigneeID,
-                  'workspace'  => $workspaceGid,
-                  'opt_fields' => 'gid,name,due_on,parent.name,parent.gid,completed_at,completed,notes,permalink_url',
-                  'limit'      => 100,
-              ]);
+    //           // 2) Pull tasks for this assignee in this workspace
+    //           $query = http_build_query([
+    //               'assignee'   => $assigneeID,
+    //               'workspace'  => $workspaceGid,
+    //               'opt_fields' => 'gid,name,due_on,parent.name,parent.gid,completed_at,completed,notes,permalink_url',
+    //               'limit'      => 100,
+    //           ]);
   
-              $nextUrl = 'https://app.asana.com/api/1.0/tasks?' . $query;
+    //           $nextUrl = 'https://app.asana.com/api/1.0/tasks?' . $query;
   
-              do {
-                  [$code, $body, $err] = $this->asanaGet($nextUrl, $accessToken);
+    //           do {
+    //               [$code, $body, $err] = $this->asanaGet($nextUrl, $accessToken);
   
-                  if ($body === false || $code >= 400) {
-                      if ($code == 429) { usleep(600000); continue; } // short backoff
-                      $summary['errors'][] = [
-                          'assignee'  => $assigneeID,
-                          'workspace' => $workspaceGid,
-                          'message'   => ($err ?: "HTTP $code") . ' BODY: ' . substr((string)$body, 0, 500),
-                          'url'       => $nextUrl,
-                      ];
-                      break;
-                  }
+    //               if ($body === false || $code >= 400) {
+    //                   if ($code == 429) { usleep(600000); continue; } // short backoff
+    //                   $summary['errors'][] = [
+    //                       'assignee'  => $assigneeID,
+    //                       'workspace' => $workspaceGid,
+    //                       'message'   => ($err ?: "HTTP $code") . ' BODY: ' . substr((string)$body, 0, 500),
+    //                       'url'       => $nextUrl,
+    //                   ];
+    //                   break;
+    //               }
   
-                  $decoded = json_decode($body, true);
-                  if (!is_array($decoded) || !isset($decoded['data'])) {
-                      $summary['errors'][] = [
-                          'assignee'  => $assigneeID,
-                          'workspace' => $workspaceGid,
-                          'message'   => 'Invalid JSON from Asana. BODY: ' . substr((string)$body, 0, 500),
-                          'url'       => $nextUrl,
-                      ];
-                      break;
-                  }
+    //               $decoded = json_decode($body, true);
+    //               if (!is_array($decoded) || !isset($decoded['data'])) {
+    //                   $summary['errors'][] = [
+    //                       'assignee'  => $assigneeID,
+    //                       'workspace' => $workspaceGid,
+    //                       'message'   => 'Invalid JSON from Asana. BODY: ' . substr((string)$body, 0, 500),
+    //                       'url'       => $nextUrl,
+    //                   ];
+    //                   break;
+    //               }
   
-                  foreach ($decoded['data'] as $task) {
-                      $record = [
-                          'task_id'       => $task['gid'] ?? null,
-                          'title'         => $task['name'] ?? '',
-                          'notes'         => $task['notes'] ?? '',
-                          'parent_id'     => $task['parent']['gid']  ?? null,
-                          'parent_name'   => $task['parent']['name'] ?? null,
-                          'permalink_url' => $task['permalink_url'] ?? null,
-                          'completed_at'  => $task['completed_at'] ?? null,
-                          'due_on'        => $task['due_on'] ?? null,
-                          'completed'     => !empty($task['completed']) ? 1 : 0,
-                          'performed_by'  => $name,
-                          // (optional) store which workspace we pulled from
-                          'workspace_id'  => $workspaceGid,
-                          'workspace_name'=> $workspaceName,
-                      ];
+    //               foreach ($decoded['data'] as $task) {
+    //                   $record = [
+    //                       'task_id'       => $task['gid'] ?? null,
+    //                       'title'         => $task['name'] ?? '',
+    //                       'notes'         => $task['notes'] ?? '',
+    //                       'parent_id'     => $task['parent']['gid']  ?? null,
+    //                       'parent_name'   => $task['parent']['name'] ?? null,
+    //                       'permalink_url' => $task['permalink_url'] ?? null,
+    //                       'completed_at'  => $task['completed_at'] ?? null,
+    //                       'due_on'        => $task['due_on'] ?? null,
+    //                       'completed'     => !empty($task['completed']) ? 1 : 0,
+    //                       'performed_by'  => $name,
+    //                       // (optional) store which workspace we pulled from
+    //                       'workspace_id'  => $workspaceGid,
+    //                       'workspace_name'=> $workspaceName,
+    //                   ];
   
-                      $res = $this->kpi->import($record);
-                      if (is_array($res) && isset($res['action']) && isset($summary[$res['action']])) {
-                          $summary[$res['action']]++;
-                      }
-                  }
+    //                   $res = $this->kpi->import($record);
+    //                   if (is_array($res) && isset($res['action']) && isset($summary[$res['action']])) {
+    //                       $summary[$res['action']]++;
+    //                   }
+    //               }
   
-                  $nextUrl = $decoded['next_page']['uri'] ?? null;
-              } while ($nextUrl);
-          }
-      }
+    //               $nextUrl = $decoded['next_page']['uri'] ?? null;
+    //           } while ($nextUrl);
+    //       }
+    //   }
   
-      // JSON response with a quick summary
-      $this->output
-          ->set_content_type('application/json')
-          ->set_output(json_encode($summary));
-  }
+    //   // JSON response with a quick summary
+    //   $this->output
+    //       ->set_content_type('application/json')
+    //       ->set_output(json_encode($summary));
+    // }
 
+    public function importAsanaTask_get()
+    {
+        // ====== 0) Hard requirements & safety switches ======
+        // Stop any active buffers and disable PHP-side compression
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        if (function_exists('ini_set')) { @ini_set('zlib.output_compression', '0'); }
+        if (function_exists('header_remove')) { @header_remove('Content-Encoding'); }
+
+        // Reasonable execution time for large pulls
+        @set_time_limit(180);
+
+        // ====== 1) Config (prefer ENV / config over hardcoding) ======
+        $accessToken = getenv('ASANA_ACCESS_TOKEN') ?: '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
+        $fallbackWorkspace = '1141478185895232'; // used if listing workspaces is restricted
+
+        $users = [
+            'Alex'       => '1208729529378377',
+            // 'Jacob'    => '1210174404900868',
+            'Nina'       => '1206216525404645',
+            'KC'         => '1209436214068863',
+            'Myla'       => '1206618672290000',
+            'Cyber'      => '1207011627772525',
+            'Faye'       => '1204274772896118',
+            'Mary'       => '1208925354989902',
+            'Ray'        => '1209806775551260',
+            // 'Caesar'   => '1210199891341332',
+            'Christina'  => '1210322171555193',
+            'Rupert'     => '1208940612212107',
+        ];
+
+        $summary = [
+            'insert' => 0,
+            'update' => 0,
+            'noop'   => 0,
+            'errors' => [],
+            'workspaces_checked' => [],
+            'requests' => 0,
+            'warnings' => []
+        ];
+
+        // ====== 2) Helpers (inline to keep this drop-in) ======
+        $asanaGet = function (string $url, string $token, int $timeout = 25) use (&$summary) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS      => 3,
+                CURLOPT_TIMEOUT        => $timeout,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $token,
+                    'Accept: application/json',
+                    // Force identity to avoid any gzip/deflate mismatches in this debug phase
+                    'Accept-Encoding: identity',
+                    'User-Agent: KPI-Dashboard/1.0 (+CodeIgniter)'
+                ],
+            ]);
+            $body = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $err  = curl_error($ch);
+            curl_close($ch);
+            $summary['requests']++;
+            return [$code, $body, $err];
+        };
+
+        $retryGet = function (string $url, string $token, int $maxRetries = 4) use ($asanaGet) {
+            $attempt = 0;
+            $sleepMs = 400; // base backoff
+            do {
+                [$code, $body, $err] = $asanaGet($url, $token);
+
+                // success or client error (don't retry 4xx except 429)
+                if ($code >= 200 && $code < 300) return [$code, $body, $err];
+                if ($code >= 400 && $code != 429) return [$code, $body, $err];
+
+                // retry on 429 / 5xx / transport issues
+                $attempt++;
+                if ($attempt > $maxRetries) return [$code, $body, $err];
+                usleep($sleepMs * 1000);
+                $sleepMs = min(4000, $sleepMs * 2);
+            } while (true);
+        };
+
+        $getAssigneeWorkspaces = function (string $assigneeGid, string $token) use ($retryGet, $fallbackWorkspace, &$summary) {
+            // Try the official endpoint for workspaces accessible to the user token.
+            $url = 'https://app.asana.com/api/1.0/workspaces';
+            [$code, $body] = $retryGet($url, $token);
+
+            if ($code >= 200 && $code < 300) {
+                $decoded = json_decode((string)$body, true);
+                if (isset($decoded['data']) && is_array($decoded['data']) && count($decoded['data']) > 0) {
+                    // Normalize as ['gid' => ..., 'name' => ...]
+                    return array_map(function ($ws) {
+                        return ['gid' => $ws['gid'], 'name' => $ws['name'] ?? $ws['gid']];
+                    }, $decoded['data']);
+                }
+            }
+
+            // Fallback: at least use the configured workspace
+            $summary['warnings'][] = "Falling back to configured workspace for assignee {$assigneeGid}";
+            return [['gid' => $fallbackWorkspace, 'name' => $fallbackWorkspace]];
+        };
+
+        // ====== 3) Main pull & import ======
+        foreach ($users as $name => $assigneeID) {
+            $workspaces = $getAssigneeWorkspaces($assigneeID, $accessToken);
+
+            foreach ($workspaces as $ws) {
+                $workspaceGid  = $ws['gid'];
+                $workspaceName = $ws['name'] ?? $ws['gid'];
+                $summary['workspaces_checked'][] = [
+                    'assignee'  => $assigneeID,
+                    'workspace' => $workspaceGid,
+                    'name'      => $workspaceName
+                ];
+
+                // Asana: search tasks by assignee+workspace
+                $query = http_build_query([
+                    'assignee'   => $assigneeID,
+                    'workspace'  => $workspaceGid,
+                    'opt_fields' => 'gid,name,due_on,parent.name,parent.gid,completed_at,completed,notes,permalink_url',
+                    'limit'      => 100,
+                ]);
+                $nextUrl = 'https://app.asana.com/api/1.0/tasks?' . $query;
+
+                while ($nextUrl) {
+                    [$code, $body, $err] = $retryGet($nextUrl, $accessToken);
+                    if ($body === false || $code >= 400) {
+                        // Never expose token; include short snippet of body for debugging
+                        $summary['errors'][] = [
+                            'assignee'  => $assigneeID,
+                            'workspace' => $workspaceGid,
+                            'message'   => ($err ?: "HTTP $code") . ' BODY: ' . substr((string)$body, 0, 400),
+                            'url'       => $nextUrl,
+                        ];
+                        break;
+                    }
+
+                    $decoded = json_decode((string)$body, true);
+                    if (!is_array($decoded) || !isset($decoded['data']) || !is_array($decoded['data'])) {
+                        $summary['errors'][] = [
+                            'assignee'  => $assigneeID,
+                            'workspace' => $workspaceGid,
+                            'message'   => 'Invalid JSON from Asana. BODY: ' . substr((string)$body, 0, 300),
+                            'url'       => $nextUrl,
+                        ];
+                        break;
+                    }
+
+                    foreach ($decoded['data'] as $task) {
+                        $record = [
+                            'task_id'       => $task['gid'] ?? null,
+                            'title'         => $task['name'] ?? '',
+                            'notes'         => $task['notes'] ?? '',
+                            'parent_id'     => $task['parent']['gid']  ?? null,
+                            'parent_name'   => $task['parent']['name'] ?? null,
+                            'permalink_url' => $task['permalink_url'] ?? null,
+                            'completed_at'  => $task['completed_at'] ?? null,
+                            'due_on'        => $task['due_on'] ?? null,
+                            'completed'     => !empty($task['completed']) ? 1 : 0,
+                            'performed_by'  => $name,
+                            'workspace_id'  => $workspaceGid,
+                            'workspace_name'=> $workspaceName,
+                        ];
+
+                        try {
+                            $res = $this->kpi->import($record);
+                            if (is_array($res) && isset($res['action']) && isset($summary[$res['action']])) {
+                                $summary[$res['action']]++;
+                            } else {
+                                // If your import() returns true/false instead, treat true as insert
+                                if ($res === true) { $summary['insert']++; } else { $summary['noop']++; }
+                            }
+                        } catch (Throwable $t) {
+                            $summary['errors'][] = [
+                                'assignee'  => $assigneeID,
+                                'workspace' => $workspaceGid,
+                                'message'   => 'DB import error: ' . substr($t->getMessage(), 0, 300),
+                                'task_id'   => $record['task_id'],
+                            ];
+                        }
+                    }
+
+                    $nextUrl = $decoded['next_page']['uri'] ?? null;
+                }
+            }
+        }
+
+        // ====== 4) Clean JSON response (no compression, no partial flush) ======
+        $this->output->set_status_header(200);
+        $this->output->set_header('Content-Type: application/json; charset=utf-8');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header('X-Accel-Buffering: no');
+
+        $payload = json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $this->output->set_output($payload);
+        return;
+    }
     
     private function getAssigneeWorkspaces(string $assigneeID, string $accessToken, array &$summary): array
     {
@@ -584,113 +783,46 @@
         ), REST_Controller::HTTP_OK);
     }
 
-    function getGraphicsTeam_get(){
+    public function getGraphicsTeam_get()
+    {
+        // 0) Fetch data
         $kpi = $this->kpi->showGraphicsTeam();
 
+        // 1) Kill ALL existing output buffers (avoid partial/compressed leftovers)
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+
+        // 2) Make sure PHP won’t compress
+        if (function_exists('ini_set')) { @ini_set('zlib.output_compression', '0'); }
+
+        // 3) Remove any Content-Encoding already present
+        if (function_exists('header_remove')) { @header_remove('Content-Encoding'); }
+
+        // 4) Common, safe headers
+        $this->output->set_header('Content-Type: application/json; charset=utf-8');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header('X-Accel-Buffering: no'); // helps on some Nginx stacks
+
+        // 5) Build payload
         if ($kpi) {
-            
-            // $apiKey = $this->config->item('openai_api_key', 'openai');
-            // // Get start and end of current week (Monday to Sunday)
-            // $startOfLastWeek = date('Y-m-d', strtotime('monday last week'));
-            // $endOfLastWeek   = date('Y-m-d', strtotime('sunday last week'));
-            
-            // $startOfLastMonth = date('Y-m-01', strtotime('first day of last month'));
-            // $endOfLastMonth = date('Y-m-t', strtotime('last day of last month'));
-            
-            // $thismonth = date('Y-m-t', strtotime('last day of this month'));
-            
-            // // $prompt = "Generate a summary for the EOW tasks for the month ($startOfWeek to $endOfWeek):\n";
-            
-            // $promptEOW = "I want to have a item in paragraph of report to Generate a summary for the last week ($startOfLastWeek to $endOfLastWeek):\n";
-            
-            
-            // $promptEOM = "I want to have a item paragraph of report to Generate a summary for the month ($thismonth):\n";
-            
-            // foreach ($kpi as $item) {
-            //     $date = $item['completed_at'];
-            //     if($date != null){
-            //         // Include only entries from the current week
-            //         if ($date >= $thismonth) {
-            //             $promptEOW .= sprintf(
-            //                 "- [%s] (%s) performed by %s: %s (Link: %s)\n",
-            //                 $item['completed_at'],
-            //                 $item['title'],
-            //                 // $item['performed_by'],
-            //                 $item['performed_by'],
-            //                 $item['permalink_url'],
-            //                 $item['due_on']
-            //             );
-            //         }
-            //     }
-                
-            // }
-            
-            // foreach ($kpi as $item) {
-            //     $date = $item['completed_at'];
-            //     if($date != null){
-            //         if ($date >= $thismonth) {
-            //             $promptEOM .= sprintf(
-            //                 "- [%s] (%s) performed by %s: %s (Link: %s)\n",
-            //                 $item['completed_at'],
-            //                 $item['title'],
-            //                 // $item['performed_by'],
-            //                 $item['performed_by'],
-            //                 $item['permalink_url'],
-            //                 $item['due_on']
-            //             );
-            //         }
-            //     }
-            // }
-            // // Initialize OpenAI
-            // $openai = new OpenAIWrapper($apiKey);
-            // $client = $openai->getClient();
-        
-            // try {
-                
-            //     $responseEOW = $client->chat()->create([
-            //         'model' => 'gpt-4-turbo',
-            //         'messages' => [
-            //             ['role' => 'system', 'content' => 'You are an expert at summarizing KPI tasks concisely and insightfully. you want to have a brief and in paragraph. Giving percentage on each project can be more help. for the conclusion I want to make the response to be more general or it is focused on team collaborative and not each members achievements.'],
-            //             ['role' => 'user', 'content' => $promptEOW],
-            //         ],
-            //         'max_tokens' => 600,
-            //         'temperature' => 1
-            //     ]);
-                
-            //     $responseEOM = $client->chat()->create([
-            //         'model' => 'gpt-4-turbo',
-            //         'messages' => [
-            //             ['role' => 'system', 'content' => 'You are an expert at summarizing KPI tasks concisely and insightfully. you want to have a brief and in paragraph. Giving percentage on each project can be more help. for the conclusion I want to make the response to be more general or it is focused on team collaborative and not each members achievements.'],
-            //             ['role' => 'user', 'content' => $promptEOM],
-            //         ],
-            //         'max_tokens' => 600,
-            //         'temperature' => 1
-            //     ]);
-                
-            //     $EOWconc = trim($responseEOW->choices[0]->message->content);
-            //     $EOMconc = trim($responseEOM->choices[0]->message->content);
-            // } 
-            
-            // catch (Exception $e) {
-            //     log_message('error', 'OpenAI API Error: ' . $e->getMessage());
-            //     $EOWconc = "Error generating conclusion.". $e->getMessage();
-            //     $EOMconc = "Error generating conclusion.". $e->getMessage();
-            // }
-    
-            // Final structured response
-            $this->response([
-                'status' => TRUE,
-                'response' => $kpi,
-                // 'conclusionEOW' => $EOWconc,
-                // 'conclusionEOM' => $EOMconc
-            ], REST_Controller::HTTP_OK);
+            $this->output->set_status_header(200);
+            $payload = json_encode(
+                ['status' => true, 'response' => $kpi],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
         } else {
-            $this->response([
-                'status' => FALSE,
-                'message' => 'No KPI data available'
-            ], REST_Controller::HTTP_NOT_FOUND);
+            $this->output->set_status_header(404);
+            $payload = json_encode(
+                ['status' => false, 'message' => 'No KPI data available'],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
         }
+
+        // 6) Send final string (no echo/flush after this)
+        $this->output->set_output($payload);
+        return;
     }
+
     
     function checkLinkStatus_get(){
         header('Content-Type: application/json');
