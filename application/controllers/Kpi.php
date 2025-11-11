@@ -1211,17 +1211,34 @@
         }
     }
     
-    function fetchleaddocket_get() {
+    public function fetchleaddocket_get()
+    {
         $list = $this->kpi->fetchleaddocket();
 
-        if ( $list ) {
-            header_remove('Content-Encoding');
-            ob_end_flush();
-            $this->response( array(
-                'status'   => TRUE,
-                'response' => $list,
-            ), REST_Controller::HTTP_OK );
-        }
+        // 1) Kill ALL existing output buffers so nothing partial gets flushed
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+
+        // 2) Make sure PHP won’t compress
+        if (function_exists('ini_set')) { @ini_set('zlib.output_compression', '0'); }
+
+        // 3) Remove any Content-Encoding someone might have set already
+        if (function_exists('header_remove')) { @header_remove('Content-Encoding'); }
+
+        // 4) Send clean JSON with explicit headers (no chunking, no caching)
+        $this->output->set_status_header(200);
+        $this->output->set_header('Content-Type: application/json; charset=utf-8');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header('X-Accel-Buffering: no'); // helps with some Nginx setups
+
+        $payload = json_encode(
+            ['status' => true, 'response' => $list],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
+        // 5) Hand the final string to CI output (no further echo/flush)
+        $this->output->set_output($payload);
+        return; // important: no further output
     }
     
     function countsign_get(){
