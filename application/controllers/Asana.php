@@ -58,7 +58,9 @@ class Asana extends REST_Controller {
         $normalize = function(array $x) {
             // Trim strings
             foreach ($x as $k => $v) {
-                if (is_string($v)) { $x[$k] = trim($v); }
+                if (is_string($v)) {
+                    $x[$k] = trim($v);
+                }
             }
 
             // completed → 1/0 (accept bool, "true"/"false", "1"/"0", yes/no)
@@ -76,16 +78,20 @@ class Asana extends REST_Controller {
             foreach (['parent_id','workspace_id','output_count','time_minutes'] as $k) {
                 if (array_key_exists($k, $x) && $x[$k] !== '' && $x[$k] !== null) {
                     // Allow numeric strings; cast safely
-                    if (is_numeric($x[$k])) { $x[$k] = (int)$x[$k]; }
+                    if (is_numeric($x[$k])) {
+                        $x[$k] = (int)$x[$k];
+                    }
                 }
             }
 
-            // Empty strings -> NULL for selected text/date fields (OPTIONAL: comment out if you want to keep empty strings)
+            // Empty strings -> NULL for selected text/date fields
             foreach ([
                 'brand','task_type','notes','permalink_url','parent_name','workspace_name',
                 'due_on','completed_at','title','performed_by'
             ] as $k) {
-                if (array_key_exists($k, $x) && $x[$k] === '') { $x[$k] = null; }
+                if (array_key_exists($k, $x) && $x[$k] === '') {
+                    $x[$k] = null;
+                }
             }
 
             // Optional: date normalization (YYYY-MM-DD only); leave as-is if already good.
@@ -107,15 +113,9 @@ class Asana extends REST_Controller {
         // ===== Perform upsert in model =====
         try {
             // EXPECTATION: bulk_upsert($items, $useWorkspaceScope) must accept/propagate:
-            //  - brand, task_type, output_count, time_minutes, performed_by, title, notes,
-            //    parent_id, parent_name, permalink_url, completed_at, due_on, completed,
+            //  - brand, task_type, output_count, time_minutes, performed_by, completed, title, notes,
+            //    parent_id, parent_name, permalink_url, completed_at, due_on,
             //    workspace_id, workspace_name, task_id (if present).
-            //
-            // If these 4 fields were not updating before, ensure your model uses them in:
-            //  - INSERT ... (brand, task_type, output_count, time_minutes, ...)
-            //  - ON DUPLICATE KEY UPDATE brand=VALUES(brand), task_type=VALUES(task_type),
-            //    output_count=VALUES(output_count), time_minutes=VALUES(time_minutes), ...
-            //
             $summary = $this->asana->bulk_upsert($items, $useWorkspaceScope);
 
             // Build response

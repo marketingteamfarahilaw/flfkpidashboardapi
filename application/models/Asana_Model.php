@@ -6,11 +6,11 @@ class Asana_model extends CI_Model
 
     public function upsert_by_title(array $data, $useWorkspaceScope = false)
     {
-        // ✅ include the new columns here
+        // ✅ allowed fields (includes completed)
         $allowed = [
             'title','notes','parent_id','permalink_url','completed_at','due_on','completed',
             'parent_name','performed_by','task_id','workspace_id','workspace_name',
-            'output_count','brand','task_type','time_minutes'   // <-- added
+            'output_count','brand','task_type','time_minutes'
         ];
 
         // keep only allowed keys
@@ -26,11 +26,14 @@ class Asana_model extends CI_Model
                 $row[$k] = (int)$row[$k];
             }
         }
+
+        // normalize nullable text fields
         foreach (['brand','task_type'] as $k) {
             if (array_key_exists($k, $row)) {
                 $row[$k] = ($row[$k] === '') ? null : $row[$k];
             }
         }
+
         if (isset($row['completed_at']) && $row['completed_at'] === '') $row['completed_at'] = null;
         if (isset($row['due_on']) && $row['due_on'] === '')             $row['due_on']       = null;
 
