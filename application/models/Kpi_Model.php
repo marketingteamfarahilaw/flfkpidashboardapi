@@ -4,6 +4,7 @@ class Kpi_Model extends CI_Model
 {
     
 	var $table = 'kpi';
+    var $asanatable = 'asanakpi';
 	var $id = 'id';
 
     function show() {
@@ -88,7 +89,7 @@ class Kpi_Model extends CI_Model
         // Build INSERT
         $insertSql = $this->db
             ->set($data)
-            ->get_compiled_insert($this->table);
+            ->get_compiled_insert($this->asanatable);
 
         // Build ON DUPLICATE KEY UPDATE part
         $updates = [];
@@ -114,7 +115,7 @@ class Kpi_Model extends CI_Model
         if ($affected === 1) {
             return ['action' => 'insert'];
         } elseif ($affected === 2) {
-            return ['action' => 'update'];
+            return ['action' => 'update'];œ
         } else {
             return ['action' => 'noop'];
         }
