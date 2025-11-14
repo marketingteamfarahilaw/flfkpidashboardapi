@@ -115,7 +115,7 @@ class Kpi_Model extends CI_Model
         if ($affected === 1) {
             return ['action' => 'insert'];
         } elseif ($affected === 2) {
-            return ['action' => 'update'];œ
+            return ['action' => 'update'];
         } else {
             return ['action' => 'noop'];
         }
