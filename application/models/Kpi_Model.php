@@ -48,12 +48,77 @@ class Kpi_Model extends CI_Model
         return $this->db->update('campaign_reports', $data);
     }
     
-    function import($data) {
+    public function import(array $row)
+    {
+        // Columns that exist in your DB table
+        $allowed = [
+            'task_id',
+            'title',
+            'notes',
+            'parent_id',      // ✅ you already have this in your DB
+            'parent_name',
+            'permalink_url',
+            'completed_at',
+            'due_on',
+            'completed',
+            'performed_by',
+            'workspace_id',
+            'workspace_name',
+            // add more if you have them:
+            // 'output_count', 'brand', 'task_type', 'time_minutes'
+        ];
 
-		$this->db->insert('asanakpi', $data);
+        $data = array_intersect_key($row, array_flip($allowed));
 
-		return $data;
-	}
+        // Must have task_id for unique index
+        if (empty($data['task_id'])) {
+            return [
+                'action' => 'noop',
+                'reason' => 'missing_task_id'
+            ];
+        }
+
+        // Normalize empty dates to NULL
+        foreach (['completed_at', 'due_on'] as $col) {
+            if (isset($data[$col]) && $data[$col] === '') {
+                $data[$col] = null;
+            }
+        }
+
+        // Build INSERT
+        $insertSql = $this->db
+            ->set($data)
+            ->get_compiled_insert($this->table);
+
+        // Build ON DUPLICATE KEY UPDATE part
+        $updates = [];
+        foreach ($data as $col => $val) {
+            if ($col === 'task_id') continue; // don't update the unique key itself
+            $updates[] = "`$col` = VALUES(`$col`)";
+        }
+
+        if (empty($updates)) {
+            // Edge case: only task_id provided
+            $insertSql .= " ON DUPLICATE KEY UPDATE `task_id` = VALUES(`task_id`)";
+        } else {
+            $insertSql .= " ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
+        }
+
+        // Execute upsert
+        $this->db->query($insertSql);
+
+        // MySQL affected_rows:
+        // 1 = insert, 2 = update, 0 = no change (same data)
+        $affected = $this->db->affected_rows();
+
+        if ($affected === 1) {
+            return ['action' => 'insert'];
+        } elseif ($affected === 2) {
+            return ['action' => 'update'];
+        } else {
+            return ['action' => 'noop'];
+        }
+    }
 	
 	function savekpi($data) {
 

@@ -481,21 +481,18 @@
     public function importAsanaTask_get()
     {
         // ====== 0) Hard requirements & safety switches ======
-        // Stop any active buffers and disable PHP-side compression
         while (ob_get_level() > 0) { @ob_end_clean(); }
         if (function_exists('ini_set')) { @ini_set('zlib.output_compression', '0'); }
         if (function_exists('header_remove')) { @header_remove('Content-Encoding'); }
 
-        // Reasonable execution time for large pulls
         @set_time_limit(180);
 
-        // ====== 1) Config (prefer ENV / config over hardcoding) ======
+        // ====== 1) Config ======
         $accessToken = getenv('ASANA_ACCESS_TOKEN') ?: '2/1209806775551260/1210071412594101:d6248d09d92e0e0321e514a469162141';
-        $fallbackWorkspace = '1141478185895232'; // used if listing workspaces is restricted
+        $fallbackWorkspace = '1141478185895232';
 
         $users = [
             'Alex'       => '1208729529378377',
-            // 'Jacob'    => '1210174404900868',
             'Nina'       => '1206216525404645',
             'KC'         => '1209436214068863',
             'Myla'       => '1206618672290000',
@@ -503,7 +500,6 @@
             'Faye'       => '1204274772896118',
             'Mary'       => '1208925354989902',
             'Ray'        => '1209806775551260',
-            // 'Caesar'   => '1210199891341332',
             'Christina'  => '1210322171555193',
             'Rupert'     => '1208940612212107',
         ];
@@ -518,7 +514,7 @@
             'warnings' => []
         ];
 
-        // ====== 2) Helpers (inline to keep this drop-in) ======
+        // ====== 2) Helpers ======
         $asanaGet = function (string $url, string $token, int $timeout = 25) use (&$summary) {
             $ch = curl_init($url);
             curl_setopt_array($ch, [
@@ -530,7 +526,6 @@
                 CURLOPT_HTTPHEADER     => [
                     'Authorization: Bearer ' . $token,
                     'Accept: application/json',
-                    // Force identity to avoid any gzip/deflate mismatches in this debug phase
                     'Accept-Encoding: identity',
                     'User-Agent: KPI-Dashboard/1.0 (+CodeIgniter)'
                 ],
@@ -545,15 +540,13 @@
 
         $retryGet = function (string $url, string $token, int $maxRetries = 4) use ($asanaGet) {
             $attempt = 0;
-            $sleepMs = 400; // base backoff
+            $sleepMs = 400;
             do {
                 [$code, $body, $err] = $asanaGet($url, $token);
 
-                // success or client error (don't retry 4xx except 429)
                 if ($code >= 200 && $code < 300) return [$code, $body, $err];
                 if ($code >= 400 && $code != 429) return [$code, $body, $err];
 
-                // retry on 429 / 5xx / transport issues
                 $attempt++;
                 if ($attempt > $maxRetries) return [$code, $body, $err];
                 usleep($sleepMs * 1000);
@@ -562,21 +555,18 @@
         };
 
         $getAssigneeWorkspaces = function (string $assigneeGid, string $token) use ($retryGet, $fallbackWorkspace, &$summary) {
-            // Try the official endpoint for workspaces accessible to the user token.
             $url = 'https://app.asana.com/api/1.0/workspaces';
             [$code, $body] = $retryGet($url, $token);
 
             if ($code >= 200 && $code < 300) {
                 $decoded = json_decode((string)$body, true);
                 if (isset($decoded['data']) && is_array($decoded['data']) && count($decoded['data']) > 0) {
-                    // Normalize as ['gid' => ..., 'name' => ...]
                     return array_map(function ($ws) {
                         return ['gid' => $ws['gid'], 'name' => $ws['name'] ?? $ws['gid']];
                     }, $decoded['data']);
                 }
             }
 
-            // Fallback: at least use the configured workspace
             $summary['warnings'][] = "Falling back to configured workspace for assignee {$assigneeGid}";
             return [['gid' => $fallbackWorkspace, 'name' => $fallbackWorkspace]];
         };
@@ -594,7 +584,6 @@
                     'name'      => $workspaceName
                 ];
 
-                // Asana: search tasks by assignee+workspace
                 $query = http_build_query([
                     'assignee'   => $assigneeID,
                     'workspace'  => $workspaceGid,
@@ -606,7 +595,6 @@
                 while ($nextUrl) {
                     [$code, $body, $err] = $retryGet($nextUrl, $accessToken);
                     if ($body === false || $code >= 400) {
-                        // Never expose token; include short snippet of body for debugging
                         $summary['errors'][] = [
                             'assignee'  => $assigneeID,
                             'workspace' => $workspaceGid,
@@ -632,12 +620,12 @@
                             'task_id'       => $task['gid'] ?? null,
                             'title'         => $task['name'] ?? '',
                             'notes'         => $task['notes'] ?? '',
-                            'parent_id'     => $task['parent']['gid']  ?? null,
+                            'parent_id'     => $task['parent']['gid']  ?? null,   // ✅ uses your parent_id column
                             'parent_name'   => $task['parent']['name'] ?? null,
                             'permalink_url' => $task['permalink_url'] ?? null,
                             'completed_at'  => $task['completed_at'] ?? null,
                             'due_on'        => $task['due_on'] ?? null,
-                            'completed'     => !empty($task['completed']) ? 1 : 0,
+                            'completed'     => !empty($task['completed']) ? 1 : 0, // ✅ syncs completed true/false
                             'performed_by'  => $name,
                             'workspace_id'  => $workspaceGid,
                             'workspace_name'=> $workspaceName,
@@ -648,8 +636,11 @@
                             if (is_array($res) && isset($res['action']) && isset($summary[$res['action']])) {
                                 $summary[$res['action']]++;
                             } else {
-                                // If your import() returns true/false instead, treat true as insert
-                                if ($res === true) { $summary['insert']++; } else { $summary['noop']++; }
+                                if ($res === true) {
+                                    $summary['insert']++;
+                                } else {
+                                    $summary['noop']++;
+                                }
                             }
                         } catch (Throwable $t) {
                             $summary['errors'][] = [
@@ -666,7 +657,7 @@
             }
         }
 
-        // ====== 4) Clean JSON response (no compression, no partial flush) ======
+        // ====== 4) JSON response ======
         $this->output->set_status_header(200);
         $this->output->set_header('Content-Type: application/json; charset=utf-8');
         $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
