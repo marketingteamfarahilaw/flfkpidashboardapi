@@ -20,7 +20,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		{
 		  	$this->db->from("$this->table u");
 
-		 	$result = $this->db->select('u.customer_id, u.customer_username, u.customer_first_name name, u.customer_email, u.customer_date_registered, u.customer_designation, u.customer_department')
+		 	$result = $this->db->select('u.customer_id, u.customer_username, u.customer_first_name, u.customer_last_name, u.customer_email, u.customer_date_registered, u.customer_designation, u.customer_department')
 						   ->where('customer_status', 'Active')
 		                   ->get();
 
