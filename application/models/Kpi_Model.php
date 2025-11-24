@@ -37,6 +37,13 @@ class Kpi_Model extends CI_Model
 
 		return $data;
 	}
+
+    function save_campaign_report($data) {
+
+		$this->db->insert('campaign_reports', $data);
+
+		return $data;
+	}
 	
 	public function get_campaign_by_name($name)
     {
