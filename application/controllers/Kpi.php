@@ -30,111 +30,30 @@
         }
     }
 
-    function show_get(){
+    public function show_get()
+    {
+        // Get data from model
         $kpi = $this->kpi->show();
 
-        // if ( $kpi ) {
-        //     $this->response( array(
-        //         'status'   => TRUE,
-        //         'response' => $kpi,
-        //     ), REST_Controller::HTTP_OK );
-        // }
-        
+        // Ensure headers are correct for THIS response as well
+        $this->output
+            ->set_header('Content-Type: application/json; charset=utf-8')
+            ->set_header('Content-Encoding: identity');
+
         if ($kpi) {
-            
-            // $apiKey = $this->config->item('openai_api_key', 'openai');
-            // // Get start and end of current week (Monday to Sunday)
-            // $startOfLastWeek = date('Y-m-d', strtotime('monday last week'));
-            // $endOfLastWeek   = date('Y-m-d', strtotime('sunday last week'));
-            
-            // $startOfLastMonth = date('Y-m-01', strtotime('first day of last month'));
-            // $endOfLastMonth = date('Y-m-t', strtotime('last day of last month'));
-            
-            // // $prompt = "Generate a summary for the EOW tasks for the month ($startOfWeek to $endOfWeek):\n";
-            
-            // $promptEOW = "Generate a summary for the last week ($startOfLastWeek to $endOfLastWeek):\n";
-            
-            
-            // $promptEOM = "'Generate a summary for the month ($startOfLastMonth to $endOfLastMonth):\n";
-            
-            // foreach ($kpi as $item) {
-            //     $date = $item['submission_date'];
-            
-            //     // Include only entries from the current week
-            //     if ($date >= $startOfLastWeek && $date <= $endOfLastWeek) {
-            //         $promptEOW .= sprintf(
-            //             "- [%s] (%s) performed by %s: %s (Link: %s)\n",
-            //             $item['submission_date'],
-            //             $item['brand'],
-            //             // $item['performed_by'],
-            //             $item['report'],
-            //             $item['link'],
-            //             $item['status']
-            //         );
-            //     }
-            // }
-            
-            // foreach ($kpi as $item) {
-            //     $date = $item['submission_date'];
-            //     if ($date >= $startOfLastMonth && $date <= $endOfLastMonth) {
-            //         $promptEOM .= sprintf(
-            //             "- [%s] (%s) performed by %s: %s (Link: %s)\n",
-            //             $item['submission_date'],
-            //             $item['brand'],
-            //             // $item['performed_by'],
-            //             $item['report'],
-            //             $item['link'],
-            //             $item['status']
-            //         );
-            //     }
-            // }
-    
-            // // Initialize OpenAI
-            // $openai = new OpenAIWrapper($apiKey);
-            // $client = $openai->getClient();
-        
-            // try {
-                
-            //     $responseEOW = $client->chat()->create([
-            //         'model' => 'gpt-4-turbo',
-            //         'messages' => [
-            //             ['role' => 'system', 'content' => 'You are an expert at summarizing KPI tasks concisely and insightfully. you want to have a brief and in paragraph format. make it longer and concisely. Giving percentage on each project can be more help. for the conclusion I want to make the response to be more general or it is focused on team collaborative and not each members achievements.'],
-            //             ['role' => 'user', 'content' => $promptEOW],
-            //         ],
-            //         'max_tokens' => 600,
-            //         'temperature' => 1
-            //     ]);
-                
-            //     $responseEOM = $client->chat()->create([
-            //         'model' => 'gpt-4-turbo',
-            //         'messages' => [
-            //             ['role' => 'system', 'content' => 'You are an expert at summarizing KPI tasks concisely and insightfully. you want to have a brief and in paragraph format. make it longer and concisely. Giving percentage on each project can be more help. for the conclusion I want to make the response to be more general or it is focused on team collaborative and not each members achievements.'],
-            //             ['role' => 'user', 'content' => $promptEOM],
-            //         ],
-            //         'max_tokens' => 600,
-            //         'temperature' => 1
-            //     ]);
-            //     $EOWconc = trim($responseEOW->choices[0]->message->content);
-            //     $EOMconc = trim($responseEOM->choices[0]->message->content);
-            // } 
-            
-            // catch (Exception $e) {
-            //     log_message('error', 'OpenAI API Error: ' . $e->getMessage());
-            //     $EOWconc = "Error generating conclusion.";
-            //     $EOMconc = "Error generating conclusion.";
-            // }
-    
-            // Final structured response
-            $this->response([
-                'status' => TRUE,
+
+            // If you only want to return raw KPI data:
+            return $this->response([
+                'status'   => TRUE,
                 'response' => $kpi,
-                // 'conclusionEOW' => $EOWconc,
-                // 'conclusionEOM' => $EOMconc
             ], REST_Controller::HTTP_OK);
+
+            // If later you want to add AI summary back, you can do it here
+            // and append `conclusionEOW` / `conclusionEOM` to this array.
         } else {
-            $this->response([
-                'status' => FALSE,
-                'message' => 'No KPI data available'
+            return $this->response([
+                'status'  => FALSE,
+                'message' => 'No KPI data available',
             ], REST_Controller::HTTP_NOT_FOUND);
         }
     }
