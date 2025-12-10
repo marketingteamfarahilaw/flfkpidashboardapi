@@ -1856,7 +1856,7 @@
      *  Body/Query: start_date, end_date, target_lead? , target_signup? , to? (default ray@farahilaw.com)
      *  Sends KPI cards + grouped tables as an HTML email.
      */
-    function summary_get()
+    function summary_beta_get()
     {
         try {
             $start = $this->input->post('start_date', true) ?: $this->input->get('start_date', true);
@@ -2216,7 +2216,7 @@
         }
     }
     
-    function successful_signup_get()
+    function successful_signup_beta_get()
     {
         try {
             $start = date('Y-m-01'); // First day of current month
